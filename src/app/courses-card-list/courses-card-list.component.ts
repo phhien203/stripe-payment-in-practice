@@ -5,6 +5,7 @@ import {CourseDialogComponent} from '../course-dialog/course-dialog.component';
 import {AngularFireAuth} from '@angular/fire/auth';
 import {map} from 'rxjs/operators';
 import {Observable} from 'rxjs';
+import {CheckoutService} from '../services/checkout.service';
 
 @Component({
   selector: 'courses-card-list',
@@ -25,7 +26,8 @@ export class CoursesCardListComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    private afAuth: AngularFireAuth) {
+    private afAuth: AngularFireAuth,
+    private checkoutService: CheckoutService) {
   }
 
   ngOnInit() {
@@ -39,7 +41,21 @@ export class CoursesCardListComponent implements OnInit {
   }
 
   purchaseCourse(course: Course, isLoggedIn: boolean) {
+    if (!isLoggedIn) {
+      alert('Please login first.');
+      return;
+    }
 
+    this.purchaseStarted = true;
+
+    this.checkoutService.startCourseCheckoutSession(course.id)
+      .subscribe((session) => {
+        console.log('Stripe checkout session initialized');
+        this.checkoutService.redirectToCheckoutFE(session);
+      }, (err) => {
+        console.log('Error creating checkout session', err);
+        this.purchaseStarted = false;
+      });
   }
 
 }
